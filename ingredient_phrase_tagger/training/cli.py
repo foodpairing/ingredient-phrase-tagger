@@ -28,17 +28,25 @@ class Cli(object):
         df_slice = df.iloc[start: end]
 
         for index, row in df_slice.iterrows():
+
+            prev_tag = None
             try:
                 # extract the display name
                 display_input = utils.cleanUnicodeFractions(row["input"])
                 tokens = utils.tokenize(display_input)
                 del(row["input"])
 
-                rowData = self.addPrefixes([(t, self.matchUp(t, row)) for t in tokens])
+                taggedTokens = [(t, self.matchUp(t, row)) for t in tokens]
+                rowData = self.addPrefixes(taggedTokens)
 
                 for i, (token, tags) in enumerate(rowData):
                     features = utils.getFeatures(token, i+1, tokens)
-                    print utils.joinLine([token] + features + [self.bestTag(tags)])
+                    best_tag = self.bestTag(tags)
+                    if best_tag.startswith("I-") and best_tag.split("-")[-1] != prev_tag.split("-")[-1]:
+                        best_tag = best_tag.replace("I-", "B-")
+
+                    print utils.joinLine([token] + features + [best_tag])
+                    prev_tag = best_tag
 
             # ToDo: deal with this
             except UnicodeDecodeError:
@@ -95,7 +103,7 @@ class Cli(object):
             if isinstance(val, basestring):
 
                 for n, vt in enumerate(utils.tokenize(val)):
-                    if utils.normalizeToken(vt) == token:
+                    if utils.normalizeToken(vt) == token or utils.abbreviateToken(vt) == token:
                         ret.append(key.upper())
 
             elif decimalToken is not None:
@@ -131,7 +139,6 @@ class Cli(object):
             prevTags = tags
 
         return newData
-
 
     def bestTag(self, tags):
 
