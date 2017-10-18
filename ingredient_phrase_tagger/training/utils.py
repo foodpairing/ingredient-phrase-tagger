@@ -73,6 +73,25 @@ def unclump(s):
     """
     return re.sub(r'\$', " ", s)
 
+def abbreviateToken(s):
+
+    tokens = {
+        "oz.": "ounce",
+        "tbsp.": "tablespoon",
+        "tsp.": "teaspoon",
+        "lb.": "pound"
+    }
+
+    keys = tokens.keys()
+    for key in keys:
+        value = tokens[key]
+        tokens[value] = key
+
+    if s in tokens.keys():
+        return tokens[s]
+    else:
+        return s
+
 def normalizeToken(s):
     """
     ToDo: FIX THIS. We used to use the pattern.en package to singularize words, but
